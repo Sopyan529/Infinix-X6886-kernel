@@ -1,150 +1,200 @@
-# How do I submit patches to Android Common Kernels
+# Custom GKI Linux Kernel 5.10 for Infinix X6886 (Helio G99 / MT6789) - Droidspaces Ready
 
-1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
-   These patches will be merged automatically in the corresponding common kernels. If the patch is already
-   in upstream Linux, post a backport of the patch that conforms to the patch requirements below.
-   - Do not send patches upstream that contain only symbol exports. To be considered for upstream Linux,
-additions of `EXPORT_SYMBOL_GPL()` require an in-tree modular driver that uses the symbol -- so include
-the new driver or changes to an existing driver in the same patchset as the export.
-   - When sending patches upstream, the commit message must contain a clear case for why the patch
-is needed and beneficial to the community. Enabling out-of-tree drivers or functionality is not
-not a persuasive case.
+[![Android Version](https://img.shields.io/badge/Android-15%20(API%2035)-green.svg)](https://android.com)
+[![Kernel Version](https://img.shields.io/badge/Kernel-5.10.226%20GKI-blue.svg)](https://kernel.org)
+[![Compiler](https://img.shields.io/badge/Clang-12.0.5%20(r416183b)-orange.svg)](https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86)
+[![Droidspaces](https://img.shields.io/badge/Droidspaces-100%25%20Supported-brightgreen.svg)](https://github.com/ravindu644/Droidspaces-OSS)
+[![Root](https://img.shields.io/badge/Root-KernelSU%20Ready-red.svg)](https://kernelsu.org)
 
-2. LESS GOOD: Develop your patches out-of-tree (from an upstream Linux point-of-view). Unless these are
-   fixing an Android-specific bug, these are very unlikely to be accepted unless they have been
-   coordinated with kernel-team@android.com. If you want to proceed, post a patch that conforms to the
-   patch requirements below.
+Source code kernel kustom **Generic Kernel Image (GKI) Linux 5.10** yang telah dioptimasi khusus untuk **Infinix X6886 (Infinix Zero 30 4G / Helio G99 / MediaTek MT6789)** yang berjalan pada **Android 15**.
 
-# Common Kernel patch requirements
+Kernel ini dilengkapi dengan seluruh dependensi wajib (*MUST HAVE: 100% Passed*) untuk menjalankan aplikasi container / virtualisasi ruang kedua **[Droidspaces](https://github.com/ravindu644/Droidspaces-OSS)** tanpa menyebabkan bootloop atau bentrok dengan driver hardware MediaTek berkat implementasi **kABI Safe Padding (Slot 3, 4, 5)**.
 
-- All patches must conform to the Linux kernel coding standards and pass `script/checkpatch.pl`
-- Patches shall not break gki_defconfig or allmodconfig builds for arm, arm64, x86, x86_64 architectures
-(see  https://source.android.com/setup/build/building-kernels)
-- If the patch is not merged from an upstream branch, the subject must be tagged with the type of patch:
-`UPSTREAM:`, `BACKPORT:`, `FROMGIT:`, `FROMLIST:`, or `ANDROID:`.
-- All patches must have a `Change-Id:` tag (see https://gerrit-review.googlesource.com/Documentation/user-changeid.html)
-- If an Android bug has been assigned, there must be a `Bug:` tag.
-- All patches must have a `Signed-off-by:` tag by the author and the submitter
+---
 
-Additional requirements are listed below based on patch type
+## 📱 Spesifikasi Perangkat Target
 
-## Requirements for backports from mainline Linux: `UPSTREAM:`, `BACKPORT:`
+| Parameter | Spesifikasi |
+| :--- | :--- |
+| **Model Perangkat** | Infinix X6886 |
+| **Pabrikan (OEM)** | Infinix / Transsion Holdings |
+| **SoC / Chipset** | MediaTek Helio G99 (`MT6789`) |
+| **Arsitektur CPU** | ARM64 (`aarch64` / ARMv8.2-A) |
+| **Versi Android** | Android 15 (SDK 35) |
+| **Build OS Bawaan** | `X6886-15.1.2.129SP03(BASE001PF001AZ)` |
+| **Kernel Baseline** | Linux 5.10.226-android12-9-00047-g4968e29b7f92-ab12786767 |
+| **AVB Rollback Index** | **5** (Proteksi ARP Hardware Bypass) |
 
-- If the patch is a cherry-pick from Linux mainline with no changes at all
-    - tag the patch subject with `UPSTREAM:`.
-    - add upstream commit information with a `(cherry picked from commit ...)` line
-    - Example:
-        - if the upstream commit message is
-```
-        important patch from upstream
+---
 
-        This is the detailed description of the important patch
+## ✨ Fitur Utama & Modifikasi Kernel
 
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
-```
->- then Joe Smith would upload the patch for the common kernel as
-```
-        UPSTREAM: important patch from upstream
+### 1. Dukungan Penuh Droidspaces & Linux Containers
+- ✅ **`CONFIG_SYSVIPC=y`** & **`CONFIG_SYSVIPC_SYSCTL=y`**: Inter-Process Communication untuk sinkronisasi thread di dalam container.
+- ✅ **`CONFIG_IPC_NS=y`**: Isolasi IPC Namespace.
+- ✅ **`CONFIG_PID_NS=y`**: Isolasi Process ID Namespace.
+- ✅ **`CONFIG_OVERLAY_FS=y`**: Filesystem layering untuk sandbox Droidspaces.
+- ✅ **`CONFIG_NAMESPACES=y`**, **`CONFIG_UTS_NS=y`**, **`CONFIG_NET_NS=y`**: Isolasi jaringan, hostname, dan filesystem mount.
+- ✅ **`CONFIG_BINFMT_MISC=y`**: Menjalankan binary multi-arsitektur di userspace.
 
-        This is the detailed description of the important patch
+### 2. Perlindungan kABI (Kernel Module Interface)
+- Menggunakan patch padding kABI resmi Droidspaces pada `include/linux/sched.h` menggunakan **Slot 3, 4, dan 5** (`_ANDROID_KABI_REPLACE`).
+- Mencegah perubahan ukuran `struct task_struct`, sehingga driver bawaan vendor MediaTek (GPU Mali, Touchscreen, Kamera, Modem) **dijamin tetap cocok (CRC match) dan tidak mengalami bootloop / reboot berulang**.
+- **SELinux Safe**: Tidak mengaktifkan `CONFIG_USER_NS` statis yang dilarang (*Neverallow*) oleh SELinux Policy Android 15.
 
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
+---
 
-        Bug: 135791357
-        Change-Id: I4caaaa566ea080fa148c5e768bb1a0b6f7201c01
-        (cherry picked from commit c31e73121f4c1ec41143423ac6ce3ce6dafdcec1)
-        Signed-off-by: Joe Smith <joe.smith@foo.org>
-```
+## 🛠️ Persyaratan Lingkungan Build (Host OS)
 
-- If the patch requires any changes from the upstream version, tag the patch with `BACKPORT:`
-instead of `UPSTREAM:`.
-    - use the same tags as `UPSTREAM:`
-    - add comments about the changes under the `(cherry picked from commit ...)` line
-    - Example:
-```
-        BACKPORT: important patch from upstream
+Pastikan komputer/laptop Anda menggunakan sistem operasi Linux (Ubuntu 20.04/22.04 LTS, Debian, atau Arch Linux).
 
-        This is the detailed description of the important patch
-
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
-
-        Bug: 135791357
-        Change-Id: I4caaaa566ea080fa148c5e768bb1a0b6f7201c01
-        (cherry picked from commit c31e73121f4c1ec41143423ac6ce3ce6dafdcec1)
-        [joe: Resolved minor conflict in drivers/foo/bar.c ]
-        Signed-off-by: Joe Smith <joe.smith@foo.org>
+### 1. Install Paket Dependencies
+```bash
+sudo apt update
+sudo apt install -y bc bison build-essential ccache curl flex g++-multilib \
+gcc-multilib git gnupg gperf libelf-dev libncurses5-dev libssl-dev \
+libxml2-utils lz4 lzop make python3 rsync unzip zip zlib1g-dev
 ```
 
-## Requirements for other backports: `FROMGIT:`, `FROMLIST:`,
-
-- If the patch has been merged into an upstream maintainer tree, but has not yet
-been merged into Linux mainline
-    - tag the patch subject with `FROMGIT:`
-    - add info on where the patch came from as `(cherry picked from commit <sha1> <repo> <branch>)`. This
-must be a stable maintainer branch (not rebased, so don't use `linux-next` for example).
-    - if changes were required, use `BACKPORT: FROMGIT:`
-    - Example:
-        - if the commit message in the maintainer tree is
-```
-        important patch from upstream
-
-        This is the detailed description of the important patch
-
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
-```
->- then Joe Smith would upload the patch for the common kernel as
-```
-        FROMGIT: important patch from upstream
-
-        This is the detailed description of the important patch
-
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
-
-        Bug: 135791357
-        (cherry picked from commit 878a2fd9de10b03d11d2f622250285c7e63deace
-         https://git.kernel.org/pub/scm/linux/kernel/git/foo/bar.git test-branch)
-        Change-Id: I4caaaa566ea080fa148c5e768bb1a0b6f7201c01
-        Signed-off-by: Joe Smith <joe.smith@foo.org>
+### 2. Download Toolchain Clang Resmi AOSP (Clang 12.0.5 `r416183b`)
+Kernel ini wajib dikompilasi menggunakan compiler resmi yang identik dengan OEM Infinix:
+```bash
+mkdir -p toolchain/clang-r416183b
+cd toolchain/clang-r416183b
+curl -L "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/android12-release/clang-r416183b.tar.gz" | tar -xz
+cd ../..
 ```
 
+---
 
-- If the patch has been submitted to LKML, but not accepted into any maintainer tree
-    - tag the patch subject with `FROMLIST:`
-    - add a `Link:` tag with a link to the submittal on lore.kernel.org
-    - add a `Bug:` tag with the Android bug (required for patches not accepted into
-a maintainer tree)
-    - if changes were required, use `BACKPORT: FROMLIST:`
-    - Example:
-```
-        FROMLIST: important patch from upstream
+## 🔨 Panduan Kompilasi (Build Step-by-Step)
 
-        This is the detailed description of the important patch
-
-        Signed-off-by: Fred Jones <fred.jones@foo.org>
-
-        Bug: 135791357
-        Link: https://lore.kernel.org/lkml/20190619171517.GA17557@someone.com/
-        Change-Id: I4caaaa566ea080fa148c5e768bb1a0b6f7201c01
-        Signed-off-by: Joe Smith <joe.smith@foo.org>
+### 1. Clone Repositori Ini
+```bash
+git clone https://github.com/Sopyan529/Infinix-X6886-kernel.git -b main kernel
+cd kernel
 ```
 
-## Requirements for Android-specific patches: `ANDROID:`
+### 2. Export Environment Variables
+```bash
+export WORKSPACE_DIR="$(pwd)"
+export TOOLCHAIN_DIR="$WORKSPACE_DIR/../toolchain/clang-r416183b"
+export PATH="$TOOLCHAIN_DIR/bin:$PATH"
 
-- If the patch is fixing a bug to Android-specific code
-    - tag the patch subject with `ANDROID:`
-    - add a `Fixes:` tag that cites the patch with the bug
-    - Example:
-```
-        ANDROID: fix android-specific bug in foobar.c
-
-        This is the detailed description of the important fix
-
-        Fixes: 1234abcd2468 ("foobar: add cool feature")
-        Change-Id: I4caaaa566ea080fa148c5e768bb1a0b6f7201c01
-        Signed-off-by: Joe Smith <joe.smith@foo.org>
+export ARCH=arm64
+export SUBARCH=arm64
+export LLVM=1
+export LLVM_IAS=1
+export CLANG_TRIPLE=aarch64-linux-gnu-
+export CROSS_COMPILE=aarch64-linux-gnu-
 ```
 
-- If the patch is a new feature
-    - tag the patch subject with `ANDROID:`
-    - add a `Bug:` tag with the Android bug (required for android-specific features)
+### 3. Konfigurasi Defconfig
+Gunakan konfigurasi Droidspaces v3:
+```bash
+make O=out droidspace_v3_defconfig
+```
 
+### 4. Mulai Kompilasi Kernel
+Gunakan semua core CPU Anda untuk mempercepat proses linking LTO:
+```bash
+make -j$(nproc --all) O=out Image.gz
+```
+Hasil biner terkompresi akan berada di: `out/arch/arm64/boot/Image.gz`.
+
+---
+
+## 📦 Panduan Repack & Sign AVB (Anti-Rollback Protection Safe)
+
+> [!IMPORTANT]
+> Bootloader MediaTek Infinix X6886 memeriksa tanda tangan AVB 2.0 dan nilai Rollback Index. Jika boot image di-flash tanpa tanda tangan yang valid, perangkat akan langsung mati di logo Infinix atau memicu ARP trigger!
+
+### 1. Repack Image
+Satukan `Image.gz` baru dengan header dan generic ramdisk Android v4:
+```bash
+# Pastikan Anda memiliki ramdisk.img bawaan boot.img Infinix X6886
+python3 -c "
+import struct
+def align_4k(n): return (n + 4095) & (~4095)
+
+with open('out/arch/arm64/boot/Image.gz', 'rb') as f: k_data = f.read()
+with open('ramdisk.img', 'rb') as f: r_data = f.read()
+with open('boot_stock_header.bin', 'rb') as f: orig_hdr = bytearray(f.read(4096))
+
+k_sz = len(k_data)
+r_sz = len(r_data)
+struct.pack_into('<I', orig_hdr, 8, k_sz)
+struct.pack_into('<I', orig_hdr, 12, r_sz)
+
+with open('boot_unsigned.img', 'wb') as f:
+    f.write(orig_hdr)
+    f.write(k_data)
+    f.write(b'\x00' * (align_4k(k_sz) - k_sz))
+    f.write(r_data)
+    f.write(b'\x00' * (align_4k(r_sz) - r_sz))
+"
+```
+
+### 2. Sign AVB Footer dengan Rollback Index = 5
+Gunakan `avbtool`:
+```bash
+./avbtool.py add_hash_footer \
+    --image boot_unsigned.img \
+    --partition_size 67108864 \
+    --partition_name boot \
+    --algorithm SHA256_RSA2048 \
+    --key testkey_rsa2048.pem \
+    --rollback_index 5 \
+    --rollback_index_location 3 \
+    --prop com.android.build.boot.fingerprint:Infinix/X6886-OP/Infinix-X6886:12/SP1A.210812.016/251014V1355:user/release-keys \
+    --prop com.android.build.boot.os_version:12 \
+    --prop com.android.build.boot.security_patch:2025-02-05
+
+mv boot_unsigned.img boot_signed_droidspace.img
+```
+
+---
+
+## ⚡ Panduan Flashing ke Ponsel
+
+### Metode 1: Via Fastboot Mode
+1. Masuk ke mode Fastboot:
+   ```bash
+   adb reboot bootloader
+   ```
+2. Pastikan perangkat terdeteksi:
+   ```bash
+   fastboot devices
+   ```
+3. Flash ke partisi `boot`:
+   ```bash
+   fastboot flash boot boot_signed_droidspace.img
+   fastboot reboot
+   ```
+
+### Metode 2: Via OrangeFox / TWRP Recovery (AnyKernel3)
+1. Salin file zip installer `Infinix_X6886_Kernel_5.10_v2.zip` ke memori HP.
+2. Masuk ke OrangeFox Recovery.
+3. Pilih file zip -> **Swipe to Flash**.
+4. Reboot System.
+
+---
+
+## 🚨 Troubleshooting & Penyelamatan Bootloop (BROM Mode)
+
+Jika perangkat mengalami kendala saat modifikasi kernel, Anda bisa memulihkan partisi `boot` secara instan menggunakan exploit **Antumbra (HeapBait)** tanpa menyalakan layar:
+
+```bash
+# Flash kembali boot asli via USB BROM
+antumbra -d DA_BR_MT6789_transsion.bin write boot_a dumps/boot.img
+antumbra -d DA_BR_MT6789_transsion.bin reboot
+```
+*Tahan tombol Volume Atas (+) & Volume Bawah (-) lalu colokkan kabel USB saat HP mati untuk masuk ke BROM mode.*
+
+---
+
+## 📜 Lisensi & Kredit
+
+- **Linux Kernel Source**: GNU General Public License v2 (GPL-2.0)
+- **kABI Patches**: [Droidspaces-OSS](https://github.com/ravindu644/Droidspaces-OSS) oleh ravindu644 & kontributor
+- **Pengembang Kernel**: [Sopyan529](https://github.com/Sopyan529)
